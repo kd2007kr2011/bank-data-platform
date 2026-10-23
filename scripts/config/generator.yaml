@@ -1,0 +1,14 @@
+seed: 20261023
+
+start_date: '2022-01-01'
+end_date: '2026-10-22'
+
+customers: 1000
+
+accounts_per_customer_min: 1
+accounts_per_customer_max: 3
+
+transactions_per_account_min: 3
+transactions_per_account_max: 12
+
+loan_probability: 0.30
