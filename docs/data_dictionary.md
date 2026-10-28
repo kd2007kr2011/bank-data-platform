@@ -1,10 +1,11 @@
 # 零售银行数据平台：业务字段字典
 
 **文件路径：** `docs/data_dictionary.md`  
-**文档版本：** V1.1  
+**文档版本：** V1.2  
 **数据库：** PostgreSQL  
 **数据层级：** Source（源业务数据层）  
-**对应建表文件：** `sql/001_schema.sql`
+**对应建表文件：** `sql/source/001_schema.sql`  
+**增量变更脚本：** `sql/source/004_add_customer_region.sql`、`sql/source/005_add_transactions_updated`
 
 ---
 
@@ -35,6 +36,7 @@
 | customer_name | VARCHAR(100) | NOT NULL | 客户姓名或企业名称 |
 | customer_type | VARCHAR(20) | NOT NULL, CHECK | 客户类型 |
 | customer_status | VARCHAR(20) | NOT NULL, DEFAULT 'ACTIVE', CHECK | 客户当前状态 |
+| region | VARCHAR(50) | NULL | 客户所属地区（省级行政区名称） |
 | open_date | DATE | NOT NULL | 客户开户日期 |
 | created_at | TIMESTAMPTZ | NOT NULL, DEFAULT CURRENT_TIMESTAMP | 记录创建时间 |
 
@@ -49,6 +51,10 @@
 - `INACTIVE`：非活跃
 - `CLOSED`：已关闭
 
+**地区取值（当前模拟数据）：**
+
+`广东`、`北京`、`上海`、`浙江`、`江苏`、`四川`、`湖北`、`福建`
+
 **业务规则：**
 
 1. 每个客户使用唯一的 `customer_id` 标识。
@@ -56,6 +62,8 @@
 3. 客户状态只能在预定义集合中选择。
 4. 客户可以关联多个账户和多笔贷款。
 5. 已有关联账户或贷款的客户不能直接删除。
+6. `region` 由 `004_add_customer_region.sql` 新增，建表时可为空；数据库层未设置 `CHECK` 约束限制取值，地区合法性由数据生成器或数据质量检查保证。
+7. `region` 可用于按地区对客户进行分组统计，例如各地区的客户数、账户数及交易量。
 
 ---
 
@@ -111,6 +119,7 @@
 | transaction_status | VARCHAR(20) | NOT NULL, CHECK | 交易处理状态 |
 | transaction_time | TIMESTAMPTZ | NOT NULL | 交易业务时间 |
 | created_at | TIMESTAMPTZ | NOT NULL, DEFAULT CURRENT_TIMESTAMP | 记录创建时间 |
+| updated_at | TIMESTAMPTZ | NOT NULL, DEFAULT CURRENT_TIMESTAMP | 记录更新时间 |
 
 **交易类型取值：**
 
@@ -136,6 +145,8 @@
 6. 已成功交易的撤销或冲正应保留可追溯记录，不直接抹除历史业务事实。
 7. 当前模型只记录一个 `account_id`，尚不能完整描述转账双方账户及双边资金流水。
 8. `transaction_time` 表示交易业务时间，`created_at` 表示数据库记录创建时间，两者不能混淆。
+9. `updated_at` 由 `005_add_transactions_updated` 新增，表示记录最后一次更新时间，可用于增量抽取（`WHERE updated_at > 上次抽取时间`）或变更识别。
+10. 当前 `updated_at` 仅在新增记录时取 `CURRENT_TIMESTAMP`，尚未配置 `ON UPDATE` 触发器或应用层回写；记录被修改时不会自动刷新，需要增量 ETL 或业务程序显式更新该字段。
 
 ---
 
@@ -297,9 +308,11 @@
 2. 业务时区统一采用 `Asia/Shanghai`。
 3. 日期字段采用 `DATE`。
 4. `created_at` 表示数据库记录创建时间。
-5. `transaction_time`、`disbursement_time`、`repayment_time` 表示对应业务事件的时间。
-6. 生成模拟数据时，应保证贷款合同、放款和还款之间的时间逻辑一致。
-7. 当前 SQL 并未使用跨表约束强制实现时间先后规则。
+5. `updated_at` 表示数据库记录更新时间，当前仅 `source.transactions` 具备该字段。
+6. `transaction_time`、`disbursement_time`、`repayment_time` 表示对应业务事件的时间。
+7. 生成模拟数据时，应保证贷款合同、放款和还款之间的时间逻辑一致。
+8. 当前 SQL 并未使用跨表约束强制实现时间先后规则。
+9. 增量抽取依赖 `updated_at` 时，必须满足 `updated_at >= created_at`，且修改记录时同步刷新 `updated_at`。
 
 ### 9.4 业务状态
 
@@ -372,6 +385,18 @@
 
 说明：该公式适用于当前简化模型的正常业务场景，尚未纳入本金冲正、核销、减免等复杂银行业务。
 
+### 10.6 地区客户分布
+
+分组字段：
+
+`customers.region`
+
+计算口径：
+
+`各地区客户数 = COUNT(DISTINCT customer_id)`，可按 `region` 关联账户与成功交易，统计各地区账户数及成功交易金额。
+
+说明：`region` 允许为空，统计时应单独列出 `region IS NULL` 的记录，避免漏计。需按客户维度计数时，应先对客户去重再关联账户和交易，防止多账户放大计数。
+
 ---
 
 ## 11. 数据生成器 V1 验收规则
@@ -397,7 +422,9 @@
 
 ## 12. 后续版本扩展字段
 
-以下字段曾出现在初始设计中，但尚未在 `001_schema.sql` 实现，因此不属于当前 V1.1 数据库结构。
+以下字段曾出现在初始设计中，但尚未在 `001_schema.sql` 实现，因此不属于当前 V1.2 数据库结构。
+
+> 说明：`customers.region` 已通过 `004_add_customer_region.sql` 落地，`transactions.updated_at` 已通过 `005_add_transactions_updated` 落地，二者均已纳入正式字段，不再列入下表。
 
 | 业务表 | 计划扩展字段 | 用途 |
 |---|---|---|
@@ -425,5 +452,6 @@
 |---|---|
 | V1.0 | 初始五张业务表的字段设计 |
 | V1.1 | 统一实际 PostgreSQL 六张表结构；增加实际放款实体、状态约束、金额规则、索引及统计口径；明确后续扩展字段 |
+| V1.2 | 新增 `customers.region`（客户所属地区，`004_add_customer_region.sql`）与 `transactions.updated_at`（记录更新时间，`005_add_transactions_updated`）；补充地区取值、增量抽取口径及时间规范 |
 
 **文档维护原则：** 数据库结构、字段字典、数据生成器和测试脚本应保持一致。任何字段新增、删除、改名或业务口径调整，都需要同步更新相关文件。
