@@ -8,3 +8,10 @@ SELECT
 FROM metadata.etl_runs
 ORDER BY run_id DESC
 LIMIT 5;
+
+SELECT
+    transaction_id,
+    COUNT(*) AS cnt
+FROM ods.transaction_current
+GROUP BY transaction_id
+HAVING COUNT(*) > 1;
