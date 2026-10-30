@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS dwd.dwd_transaction_detail(
     ods_load_time TIMESTAMPTZ NOT NULL,
     dw_load_time TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT ck_dwd_transaction_type
-        CHECK(transaction_type IN ('DEPOSIT','WITHHDRAWAL','TRANSFER')),
+        CHECK(transaction_type IN ('DEPOSIT','WITHDRAWAL','TRANSFER')),
     CONSTRAINT ck_dwd_transaction_status
         CHECK(transaction_status IN ('PENDING','SUCCESS','FAILED','CANCELLED','REVERSED')),
     CONSTRAINT ck_dwd_transaction_date
@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS dwd.dwd_transaction_detail (
     ods_load_time TIMESTAMPTZ NOT NULL,
     dw_load_time TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT ck_dwd_transaction_type
+    
       CHECK (transaction_type IN ('DEPOSIT', 'WITHDRAWAL', 'TRANSFER')),
     CONSTRAINT ck_dwd_transaction_status
       CHECK (transaction_status IN ('PENDING', 'SUCCESS', 'FAILED', 'CANCELLED', 'REVERSED')),
