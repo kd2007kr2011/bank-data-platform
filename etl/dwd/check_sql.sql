@@ -39,3 +39,17 @@ SELECT
         ORDER BY load_time DESC
     ) AS rn
 FROM ods.ods_transaction;
+
+
+WITH ranked as (
+    SELECT
+        *,
+        ROW_NUMBER() OVER(
+            PARTITION BY transaction_id
+            ORDER BY created_at DESC 
+        ) AS rn
+        FROM ods.ods_transaction
+)
+SELECT *
+FROM ranked
+WHERE rn = 1;
