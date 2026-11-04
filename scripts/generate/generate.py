@@ -1,4 +1,4 @@
-"""Generate six CSVs matching sql/001_schema.sql. No database credentials needed."""
+"""Generate six CSVs matching sql/source/ddl/001_schema.sql. No database credentials needed."""
 import csv
 import sys
 from datetime import date, datetime, time, timedelta
@@ -10,7 +10,10 @@ import numpy as np
 import yaml
 from faker import Faker
 
-ROOT = Path(__file__).resolve().parents[1]
+# 项目根目录：scripts/generate/generate.py -> scripts/generate -> scripts -> 项目根
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+SCRIPTS_DIR = PROJECT_ROOT / "scripts"
+DATA_DIR = PROJECT_ROOT / "data" / "generated"
 TZ = ZoneInfo('Asia/Shanghai')
 TABLES = ('customers','accounts','transactions','loans','loan_disbursements','loan_repayments')
 COLUMNS = {
@@ -32,7 +35,7 @@ def random_date(rng, start, end):
     return start + timedelta(days=int(rng.integers(0, (end-start).days+1)))
 
 def generate():
-    cfg = yaml.safe_load((ROOT/'config/generator.yaml').read_text(encoding='utf-8'))
+    cfg = yaml.safe_load((SCRIPTS_DIR/'config/generator.yaml').read_text(encoding='utf-8'))
     rng=np.random.default_rng(int(cfg['seed']))
     fake=Faker('zh_CN'); fake.seed_instance(int(cfg['seed']))
     start=date.fromisoformat(cfg['start_date']); end=date.fromisoformat(cfg['end_date'])
@@ -79,7 +82,7 @@ def generate():
             rep_id+=1
             out['loan_repayments'].append([rep_id,loan_id,money(principal),money(interest),'SUCCESS',timestamp(rep_date),timestamp(rep_date)])
             out['loans'].append([loan_id,customer_id,money(loan_total),'PAID_OFF' if fully_paid else 'ACTIVE',contract_date.isoformat(),timestamp(contract_date)])
-    directory=ROOT/'data/generated'; directory.mkdir(parents=True,exist_ok=True)
+    directory=DATA_DIR; directory.mkdir(parents=True,exist_ok=True)
     for table,rows in out.items():
         with (directory/f'{table}.csv').open('w',newline='',encoding='utf-8-sig') as f:
             writer=csv.writer(f); writer.writerow(COLUMNS[table]); writer.writerows(rows)

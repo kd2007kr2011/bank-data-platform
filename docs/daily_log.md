@@ -1,3 +1,9 @@
+# 开发日志
+
+> **说明**：本目录及 `daily_log/` 下的内容是开发过程的原始记录，其中提到的文件路径、
+> 目录结构反映的是**当时**的状态。项目已完成一次目录重组，现行结构以
+> [README 第 5 节](../README.md) 为准；历史版本脚本移入 `etl/archive/`。
+
 完成五张源业务表的 DDL 文件。
 为表结构添加主键、外键、唯一约束及 CHECK 约束。
 编写独立的异常测试 SQL。
@@ -34,8 +40,8 @@
 - 误删库保护不足：改为连接前校验 `DB_NAME`，连接后再用 `current_database()` 复核。
 - 缺文件、空表、`pg_get_serial_sequence` 返回 NULL 时缺少明确提示或回退处理。
 - `README.md` 为 UTF-16LE 编码，统一转为 UTF-8。
-- `sql/other_sql.sql` 中第一条插入语句引用了不存在的列 `repayment_amount`。
-- 文档中的建表文件路径由 `sql/source/001_schema.sql` 更正为 `sql/001_schema.sql`。
+- `sql/other_sql.sql` 中第一条插入语句引用了不存在的列 `repayment_amount`（该文件现已拆分为 `sql/checks/constraint_failure_cases.sql` 与 `sql/checks/db_info.sql`）。
+- 文档中的建表文件路径由 `sql/source/001_schema.sql` 更正为 `sql/001_schema.sql`（建表文件现位于 `sql/source/ddl/001_schema.sql`）。
 
 **待办**
 

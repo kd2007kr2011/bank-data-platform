@@ -1,27 +1,18 @@
 
+"""DWD 交易明细构建：ODS -> dwd.dwd_transaction_detail。"""
+
 from pathlib import Path
-import os
 import sys
 
-import psycopg
-from dotenv import load_dotenv
-
-
+# 项目根目录：etl/dwd/build_dwd_transactions.py -> etl/dwd -> etl -> 项目根
 ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
-load_dotenv(ROOT / ".env")
-
-SQL_PATH = ROOT / "sql" / "dwd" / "transaction.sql"
+from etl.common.db import get_connection
 
 
-def get_connection():
-    return psycopg.connect(
-        host=os.getenv("DB_HOST", "localhost"),
-        port=os.getenv("DB_PORT", "5432"),
-        dbname=os.getenv("DB_NAME", "bank_dev"),
-        user=os.environ["DB_USER"],
-        password=os.environ["DB_PASSWORD"],
-    )
+SQL_PATH = ROOT / "sql" / "dwd" / "transform" / "transaction.sql"
 
 
 def load_sql():

@@ -1,3 +1,4 @@
+-- 结构核对：对照真实数据库检查 Source 字段、约束与新建表是否存在。
 -- 1. 检查实际 Source 字段（上传文件是字段字典，不是数据库实测结果）
 SELECT table_name, column_name, data_type, is_nullable
 FROM information_schema.columns

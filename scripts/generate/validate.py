@@ -5,8 +5,9 @@ from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
 
-ROOT=Path(__file__).resolve().parents[1]
-PATH=ROOT/'data/generated'
+# 项目根目录：scripts/generate/validate.py -> scripts/generate -> scripts -> 项目根
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PATH = PROJECT_ROOT / 'data' / 'generated'
 TABLES=['customers','accounts','transactions','loans','loan_disbursements','loan_repayments']
 KEYS=['customer_id','account_id','transaction_id','loan_id','disbursement_id','repayment_id']
 

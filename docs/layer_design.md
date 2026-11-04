@@ -6,7 +6,7 @@
 - 时区：`Asia/Shanghai`；金额：`NUMERIC(18,2)`，默认 CNY
 - 范围：Source、ODS、DWD；本阶段创建三张表，非完整银行生产数仓
 
-> **核对边界**：本设计逐字段核对了上传的 **Source V1.1 字段字典**，没有直接连入本地 PostgreSQL，也没有拿到 `sql/001_schema.sql` 的真实内容。执行前请用 `sql/checks/01_structure_checks.sql` 对照真实数据库。尤其是 schema、字段、状态和主键约束。
+> **核对边界**：本设计逐字段核对了上传的 **Source V1.1 字段字典**，没有直接连入本地 PostgreSQL，也没有拿到 `sql/source/ddl/001_schema.sql` 的真实内容。执行前请用 `sql/checks/01_structure_checks.sql` 对照真实数据库。尤其是 schema、字段、状态和主键约束。
 
 ## 1. 三层的业务职责
 
@@ -124,30 +124,42 @@ ODS 不对源交易施加新的业务 CHECK；更严谨的原始保真如果要�
 ```text
 bank-data-platform/
 ├── docs/layer_design.md
-├── sql/ods/ddl.sql
-├── sql/dwd/ddl.sql
-├── sql/etl/01_load_ods_transaction_example.sql
-├── sql/etl/02_load_dwd_transaction.sql
-├── sql/etl/03_build_loan_snapshot_example.sql
+├── sql/ods/ddl/ddl.sql
+├── sql/ods/ddl/transaction_current.sql
+├── sql/dwd/ddl/ddl.sql
+├── sql/dwd/transform/transaction.sql
+├── sql/dwd/transform/loan_snapshot.sql
 └── sql/checks/01_structure_checks.sql
 ```
 
 推荐在项目根目录执行（根据本机实际用户名和数据库调整）：
 
 ```powershell
-psql -h localhost -U postgres -d bank_dev -v ON_ERROR_STOP=1 -f sql/ods/ddl.sql
-psql -h localhost -U postgres -d bank_dev -v ON_ERROR_STOP=1 -f sql/dwd/ddl.sql
+psql -h localhost -U postgres -d bank_dev -v ON_ERROR_STOP=1 -f sql/ods/ddl/ddl.sql
+psql -h localhost -U postgres -d bank_dev -v ON_ERROR_STOP=1 -f sql/dwd/ddl/ddl.sql
 psql -h localhost -U postgres -d bank_dev -v ON_ERROR_STOP=1 -f sql/checks/01_structure_checks.sql
 ```
 
 **以上三条是 D08 必做**；只建结构，不自动装载。
 
-可选 ETL 演示（先核对 Source 真实结构并完成 DDL）：
+可选 ETL 演示（先核对 Source 真实结构并完成 DDL）。当前 ETL 由 Python 脚本驱动，
+SQL 加工逻辑放在 `sql/` 下对应目录中：
 
 ```powershell
-psql -h localhost -U postgres -d bank_dev -v ON_ERROR_STOP=1 -v batch_id=batch_demo_001 -f sql/etl/01_load_ods_transaction_example.sql
-psql -h localhost -U postgres -d bank_dev -v ON_ERROR_STOP=1 -f sql/etl/02_load_dwd_transaction.sql
-psql -h localhost -U postgres -d bank_dev -v ON_ERROR_STOP=1 -v snapshot_date=2026-10-26 -f sql/etl/03_build_loan_snapshot_example.sql
+# Source -> ODS 增量装载（含质量检查与坏数据隔离）
+.venv/Scripts/python etl/load/load_incremental.py
+
+# ODS -> DWD 交易明细
+.venv/Scripts/python etl/dwd/build_dwd_transactions.py
+
+# 贷款快照（可重跑、可回补）
+.venv/Scripts/python etl/dwd/build_loan_snapshot.py
+```
+
+单独执行 DWD 交易加工 SQL：
+
+```powershell
+psql -h localhost -U postgres -d bank_dev -v ON_ERROR_STOP=1 -f sql/dwd/transform/transaction.sql
 ```
 
 > 注意：此 ODS 示例是 **全量源表导入某个 batch**，不能把“每天使用新 batch 全量复制”当作正式增量同步方案。实际增量应设计源变更发现、批次水位、异常重跑与幂等处理。

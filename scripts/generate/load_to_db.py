@@ -7,9 +7,9 @@ import psycopg
 from psycopg import sql
 from dotenv import load_dotenv
 
-ROOT = Path(__file__).resolve().parent.parent
-PROJECT_ROOT = ROOT.parent
-DATA_DIR = ROOT / "data" / "generated"
+# 项目根目录：scripts/generate/load_to_db.py -> scripts/generate -> scripts -> 项目根
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+DATA_DIR = PROJECT_ROOT / "data" / "generated"
 ENV_PATH = PROJECT_ROOT / ".env"
 
 if not ENV_PATH.is_file():

@@ -21,9 +21,9 @@
 | D01 | 明确项目目标、组织项目目录、初始化 Git | `README.md`、项目结构 | 已完成（按开发记录） |
 | D02 | Python/PostgreSQL 环境、数据库连接、环境变量 | `.env.example`、`scripts/check_db.py` | 已完成（按开发记录） |
 | D03 | 业务 ER 图、表关系和数据字典 | `docs/er_diagram.md`、`docs/data_dictionary.md` | 已完成（按开发记录） |
-| D04 | 源表 DDL、主外键/CHECK/UNIQUE 约束及异常验证 | `sql/source/001_schema.sql` 等 | 已完成（按开发记录） |
+| D04 | 源表 DDL、主外键/CHECK/UNIQUE 约束及异常验证 | `sql/source/ddl/001_schema.sql` 等 | 已完成（按开发记录） |
 | D05 | Faker + NumPy 数据生成、质量校验、导入 PostgreSQL | 数据生成与导入脚本、配置文件 | 已完成（按开发记录） |
-| D06 | 六类业务 SQL 分析 | `sql/analysis/01_06.sql` | 已完成（按开发记录） |
+| D06 | 六类业务 SQL 分析 | `sql/analysis/`（六类业务分析查询） | 已完成（按开发记录） |
 | D07 | 从空库复现、执行计划检查、整理文档、发布标签 | `docs/week1_demo.md`、Git tag `v0.1` | 待最终验收 |
 
 > 路径以本机实际文件为准。若脚本名称与此文不同，请统一 README、本文和命令。
@@ -120,7 +120,7 @@ CREATE SCHEMA IF NOT EXISTS ads;
 使用 `psql` 的参考命令：
 
 ```powershell
-psql -h localhost -U postgres -d bank_dev -f sql/source/001_schema.sql
+psql -h localhost -U postgres -d bank_dev -f sql/source/ddl/001_schema.sql
 ```
 
 若实际建表 SQL 分散于多个文件，请按依赖顺序依次执行。建表后确认六张表存在：
@@ -190,7 +190,8 @@ SELECT 'loan_repayments', COUNT(*) FROM source.loan_repayments;
 ### 4.6 执行六个业务查询
 
 ```powershell
-psql -h localhost -U postgres -d bank_dev -f sql/analysis/01_06.sql
+psql -h localhost -U postgres -d bank_dev -f sql/analysis/monthly_transaction_amount.sql
+psql -U postgres -d bank_dev -f sql/analysis/loan_disbursement_analysis.sql
 ```
 
 确保六个查询均可运行，且已核对 JOIN 关系、去重口径、成功状态筛选及日期范围。

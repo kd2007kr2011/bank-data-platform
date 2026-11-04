@@ -1,14 +1,15 @@
 
-"""D13：构建贷款合同和还款事件 DWD。"""
+"""构建贷款合同和还款事件 DWD。"""
 
-import os
+import sys
 from pathlib import Path
 
-import psycopg
-from dotenv import load_dotenv
-
+# 项目根目录：etl/dwd/build_dwd_loans.py -> etl/dwd -> etl -> 项目根
 ROOT = Path(__file__).resolve().parents[2]
-load_dotenv(ROOT / ".env")
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from etl.common.db import get_connection
 
 
 def build_loans(conn):
@@ -113,21 +114,12 @@ def build_repayments(conn):
 
 
 def main():
-    # 动态拼接标准的 PostgreSQL 连接字符串
-    db_host = os.environ.get("DB_HOST", "localhost")
-    db_port = os.environ.get("DB_PORT", "5432")
-    db_name = os.environ.get("DB_NAME", "bank_dev")
-    db_user = os.environ.get("DB_USER", "postgres")
-    db_password = os.environ.get("DB_PASSWORD", "")
-
-    database_url = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
-
-    with psycopg.connect(database_url) as conn:
+    with get_connection() as conn:
         with conn.transaction():
             loan_changed = build_loans(conn)
             repayment_changed = build_repayments(conn)
 
-        print("D13 贷款 DWD 构建成功")
+        print("贷款 DWD 构建成功")
         print(f"贷款合同新增/变更：{loan_changed}")
         print(f"还款事件新增/变更：{repayment_changed}")
 

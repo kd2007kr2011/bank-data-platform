@@ -1,5 +1,5 @@
 
-"""D14：幂等性、历史重跑和事务回滚测试。"""
+"""贷款快照的幂等性、历史重跑和事务回滚测试。"""
 
 import sys
 import unittest
@@ -12,7 +12,7 @@ from psycopg.errors import CheckViolation
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from etl.dwd.build_loan_snapshot_d14 import (
+from etl.dwd.build_loan_snapshot import (
     get_connection,
     build_snapshot,
 )

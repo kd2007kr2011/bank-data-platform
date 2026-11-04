@@ -4,8 +4,8 @@
 **文档版本：** V1.2  
 **数据库：** PostgreSQL  
 **数据层级：** Source（源业务数据层）  
-**对应建表文件：** `sql/source/001_schema.sql`  
-**增量变更脚本：** `sql/source/004_add_customer_region.sql`、`sql/source/005_add_transactions_updated`
+**对应建表文件：** `sql/source/ddl/001_schema.sql`  
+**增量变更脚本：** `sql/source/alter/004_add_customer_region.sql`、`sql/source/alter/005_add_transactions_updated.sql`
 
 ---
 

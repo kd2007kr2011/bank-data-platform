@@ -19,9 +19,9 @@ CREATE TABLE if not EXISTS metadata.etl_runs(
 
     error_message TEXT
 
-)
+);
 
-
+-- 查询该任务上一次成功的水位线
 SELECT
     watermark_end
 FROM metadata.etl_runs
