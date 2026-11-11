@@ -20,7 +20,7 @@
 |---|---|---|---|
 | D01 | 明确项目目标、组织项目目录、初始化 Git | `README.md`、项目结构 | 已完成（按开发记录） |
 | D02 | Python/PostgreSQL 环境、数据库连接、环境变量 | `.env.example`、`scripts/check_db.py` | 已完成（按开发记录） |
-| D03 | 业务 ER 图、表关系和数据字典 | `docs/er_diagram.md`、`docs/data_dictionary.md` | 已完成（按开发记录） |
+| D03 | 业务 ER 图、表关系和数据字典 | `docs/design/er_diagram.md`、`docs/dictionaries/data_dictionary.md` | 已完成（按开发记录） |
 | D04 | 源表 DDL、主外键/CHECK/UNIQUE 约束及异常验证 | `sql/source/ddl/001_schema.sql` 等 | 已完成（按开发记录） |
 | D05 | Faker + NumPy 数据生成、质量校验、导入 PostgreSQL | 数据生成与导入脚本、配置文件 | 已完成（按开发记录） |
 | D06 | 六类业务 SQL 分析 | `sql/analysis/`（六类业务分析查询） | 已完成（按开发记录） |
@@ -49,7 +49,7 @@
 
 ### 3.2 数据字典与约束
 
-详细字段定义见 [`data_dictionary.md`](./data_dictionary.md)，ER 图见 [`er_diagram.md`](./er_diagram.md)。重点核对：
+详细字段定义见 [`data_dictionary.md`](../dictionaries/data_dictionary.md)，ER 图见 [`er_diagram.md`](../design/er_diagram.md)。重点核对：
 
 - 主键不可重复且不能为空。
 - 外键必须引用已存在的客户、账户或贷款记录。
@@ -190,8 +190,8 @@ SELECT 'loan_repayments', COUNT(*) FROM source.loan_repayments;
 ### 4.6 执行六个业务查询
 
 ```powershell
-psql -h localhost -U postgres -d bank_dev -f sql/analysis/monthly_transaction_amount.sql
-psql -U postgres -d bank_dev -f sql/analysis/loan_disbursement_analysis.sql
+psql -h localhost -U postgres -d bank_dev -f sql/analysis/transaction/monthly_transaction_amount.sql
+psql -U postgres -d bank_dev -f sql/analysis/loan/loan_disbursement_analysis.sql
 ```
 
 确保六个查询均可运行，且已核对 JOIN 关系、去重口径、成功状态筛选及日期范围。

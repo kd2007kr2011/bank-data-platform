@@ -127,7 +127,7 @@ Source 合法交易类型：`DEPOSIT`、`WITHDRAWAL`、`TRANSFER`；状态：`PE
 主要设计文件：
 
 ```text
-docs/layer_design.md
+docs/design/layer_design.md
 sql/ods/ddl.sql
 sql/dwd/ddl.sql
 ```

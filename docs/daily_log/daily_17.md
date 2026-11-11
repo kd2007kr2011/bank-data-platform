@@ -264,8 +264,8 @@ DWS 则在 DWD 的基础上，按照不同业务维度提前完成数据聚合�
 
 | 文件 | 交付内容 |
 |---|---|
-| `sql/dws/customer_daily.sql` | 客户交易日汇总 |
-| `sql/dws/region_daily.sql` | 地区交易日汇总 |
+| `sql/dws/load/customer_transaction_daily.sql` | 客户交易日汇总 |
+| `sql/dws/load/region_transaction_daily.sql` | 地区交易日汇总 |
 | DWS 客户汇总表 | `dws.dws_customer_transaction_daily` |
 | DWS 地区汇总表 | `dws.dws_region_transaction_daily` |
 | 数据校验 SQL | DWD 与 DWS 汇总结果对账 |

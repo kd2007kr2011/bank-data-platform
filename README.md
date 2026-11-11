@@ -83,12 +83,22 @@ bank-data-platform/
 ├── .env.example
 ├── requirements.txt
 ├── docs/
-│   ├── requirements.md          # 需求说明
-│   ├── data_dictionary.md       # 数据字典
-│   ├── er_diagram.md            # ER 图
-│   ├── layer_design.md          # 数据仓库分层设计
-│   ├── daily_log.md             # 开发日志索引
-│   ├── daily_log/               # 按开发日拆分的过程记录
+│   ├── requirements/            # 需求说明
+│   │   └── requirements.md
+│   ├── design/                  # 建模与结构设计
+│   │   ├── layer_design.md      # 数据仓库分层设计
+│   │   ├── star_schema.md       # 星型维度建模设计
+│   │   └── er_diagram.md        # ER 图
+│   ├── dictionaries/            # 表结构与字段字典
+│   │   ├── warehouse_table_index.md
+│   │   ├── source_table_dictionary.md
+│   │   ├── ods_table_dictionary.md
+│   │   ├── dwd_table_dictionary.md
+│   │   ├── dws_table_dictionary.md
+│   │   └── data_dictionary.md   # Source 业务字段字典
+│   ├── daily_log/               # 开发日志与按开发日拆分的过程记录
+│   │   ├── index.md
+│   │   └── daily_*.md
 │   └── check_and_accept/        # 阶段验收记录
 ├── sql/
 │   ├── source/                  # 源层
@@ -96,16 +106,27 @@ bank-data-platform/
 │   │   ├── seed/                # 手工种子数据
 │   │   ├── alter/               # 字段与约束的增量变更
 │   │   ├── trigger/             # 触发器
-│   │   └── checks/              # 源层数据校验
+│   │   └── checks/              # 源层校验与约束失败用例
 │   ├── ods/
-│   │   └── ddl/                 # ODS 建表（含交易最新状态表、拒收表）
-│   ├── dwd/
-│   │   ├── ddl/                 # DWD 建表与结构变更
+│   │   ├── ddl/                 # ODS 建表（含交易最新状态表、拒收表）
+│   │   └── checks/              # ODS 唯一性与行数核对
+│   ├── dwd/                     # 明细与维度层
+│   │   ├── ddl/                 # 建表与结构变更（含维度表、事实表 DDL）
 │   │   ├── transform/           # DWD 加工 SQL
+│   │   ├── load/                # 事实表装载 SQL
+│   │   ├── checks/              # DWD 数据核对与星型模型校验
 │   │   └── demo/                # 演示用表
+│   ├── dws/                     # 汇总层
+│   │   ├── load/                # 汇总表装载 SQL
+│   │   └── checks/              # 汇总结果核对
 │   ├── metadata/                # 元数据表（ETL 运行记录）
-│   ├── analysis/                # 业务分析查询，按主题命名
-│   └── checks/                  # 结构、约束与临时核对查询
+│   ├── analysis/                # 业务分析查询，按主题分目录
+│   │   ├── customer/            # 客户与账户关联分析
+│   │   ├── account/             # 账户维度交易汇总
+│   │   ├── transaction/         # 交易金额与趋势统计
+│   │   └── loan/                # 贷款放款与余额分析
+│   ├── ops/                     # 运行环境与执行诊断查询
+│   └── checks/                  # 跨层核对（结构核对、三层对账）
 ├── etl/
 │   ├── common/db.py             # 统一的数据库连接工厂
 │   ├── extract/                 # 抽取：全量、增量
@@ -139,7 +160,7 @@ bank-data-platform/
 
 ### 目录组织约定
 
-1. **SQL 按数据层分目录**：`source` / `ods` / `dwd` / `metadata`；层内再按职责分子目录——`ddl` 建表、`transform` 加工查询、`alter` 结构变更、`checks` 校验查询。
+1. **SQL 按数据层分目录**：`source` / `ods` / `dwd` / `dws` / `metadata`；层内再按职责分子目录——`ddl` 建表、`transform` 加工查询、`load` 装载、`alter` 结构变更、`checks` 校验查询。
 2. **ETL 按处理阶段分目录**：`extract` 抽取 → `load` 装载 → `dwd` 明细构建；公共能力（连接、质量规则）放在 `common/` 与 `quality/`。
 3. **文件名不写开发日编号**：脚本名 = 动作 + 对象（如 `build_loan_snapshot.py`）。同一职责只保留一个当前版本，被取代的版本移入 `etl/archive/`。
 4. **测试统一在 `tests/`**：单元测试（不依赖数据库）与集成测试（依赖数据库）同目录，文件名以 `test_` 开头。
@@ -151,8 +172,10 @@ bank-data-platform/
 - `sql/source/ddl/001_schema.sql`：源业务表结构、约束及索引定义。
 - `sql/source/seed/002_seed.sql`：少量手工种子数据，用于快速验证约束。
 - `sql/source/checks/003_validate.sql`：数据量、关联完整性及金额合法性检查。
-- `sql/checks/constraint_failure_cases.sql`：外键、主键、CHECK 约束的失败用例测试。
-- `sql/analysis/`：六类业务分析查询及执行计划、ETL 运行监控。
+- `sql/source/checks/constraint_failure_cases.sql`：外键、主键、CHECK 约束的失败用例测试。
+- `sql/analysis/`：业务分析查询，按客户、账户、交易、贷款四个主题分目录。
+- `sql/checks/`：跨层核对查询——结构核对与 Source→ODS→DWD 三层对账。
+- `sql/ops/`：运行环境与执行诊断查询——数据库信息、ETL 运行监控、执行计划分析。
 - `etl/extract/`、`etl/load/`、`etl/dwd/`：抽取、装载与明细构建脚本。
 - `etl/quality/ods_rules.py`：ODS 数据质量规则与坏数据隔离逻辑。
 - `scripts/generate/generate.py`：按配置生成六张表的合成 CSV。
@@ -279,10 +302,27 @@ psql -U postgres -d bank_dev -f sql/ods/ddl/transaction_current.sql
 psql -U postgres -d bank_dev -f sql/ods/ddl/rejected_records.sql
 psql -U postgres -d bank_dev -f sql/dwd/ddl/ddl.sql
 psql -U postgres -d bank_dev -f sql/dwd/ddl/loan.sql
+psql -U postgres -d bank_dev -f sql/dwd/ddl/dimensions.sql
 psql -U postgres -d bank_dev -f sql/metadata/etl_runs.sql
 ```
 
-### 8.2 ETL 主链路
+### 8.2 事实表与汇总表装载
+
+维度、事实表建好并完成 DWD 明细构建后执行：
+
+```bash
+# DWD 事实表装载
+psql -U postgres -d bank_dev -f sql/dwd/load/load_fact_transaction.sql
+psql -U postgres -d bank_dev -f sql/dwd/load/load_fact_loan_daily.sql
+
+# DWS 汇总表装载
+psql -U postgres -d bank_dev -f sql/dws/load/customer_transaction_daily.sql
+psql -U postgres -d bank_dev -f sql/dws/load/region_transaction_daily.sql
+psql -U postgres -d bank_dev -f sql/dws/load/customer_loan_risk_daily.sql
+psql -U postgres -d bank_dev -f sql/dws/load/region_loan_risk_daily.sql
+```
+
+### 8.3 ETL 主链路
 
 ```bash
 # Source -> ODS 增量装载（含质量检查与坏数据隔离）
@@ -296,7 +336,7 @@ psql -U postgres -d bank_dev -f sql/metadata/etl_runs.sql
 .venv/Scripts/python etl/dwd/build_loan_snapshot.py
 ```
 
-### 8.3 测试
+### 8.4 测试
 
 ```bash
 # 全部测试（tests.test_ods_rules 不依赖数据库，其余依赖）
@@ -312,7 +352,7 @@ psql -U postgres -d bank_dev -f sql/metadata/etl_runs.sql
 
 - `generate.py` 不连接数据库，只根据 `generator.yaml` 生成 CSV；修改 `seed` 可得到不同但可复现的数据。
 - `load_to_db.py` 会先校验 `DB_NAME` 必须为 `bank_dev`，再 `TRUNCATE ... RESTART IDENTITY` 清空六张表，然后按外键顺序用 `COPY` 导入，最后同步自增序列。
-- 数据质量检查 SQL 见 `sql/source/checks/003_validate.sql`；约束失败用例见 `sql/checks/constraint_failure_cases.sql`（该文件中的语句均预期报错，需逐条手动执行）。
+- 数据质量检查 SQL 见 `sql/source/checks/003_validate.sql`；约束失败用例见 `sql/source/checks/constraint_failure_cases.sql`（该文件中的语句均预期报错，需逐条手动执行）。
 
 ## 9. 开发计划
 

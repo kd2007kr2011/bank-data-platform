@@ -1,3 +1,5 @@
+-- 文件：sql/checks/reconciliation.sql
+
 WITH source_data AS (
     SELECT
         transaction_id,
