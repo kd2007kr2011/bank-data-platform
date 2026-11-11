@@ -193,7 +193,9 @@ CREATE TABLE IF NOT EXISTS dwd.fact_transaction (
             transaction_status IN (
                 'PENDING',
                 'SUCCESS',
-                'FAILED'
+                'FAILED',
+                'CANCELLED',
+                'REVERSED'
             )
         )
 
